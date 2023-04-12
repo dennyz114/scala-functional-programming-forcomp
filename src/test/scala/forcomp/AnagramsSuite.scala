@@ -3,17 +3,17 @@ package forcomp
 class AnagramsSuite extends munit.FunSuite:
   import Anagrams.*
 
-  test("wordOccurrences: abcd (3pts)".only) {
+  test("wordOccurrences: abcd (3pts)") {
     assertEquals(wordOccurrences("abcd"), List(('a', 1), ('b', 1), ('c', 1), ('d', 1)))
   }
 
-  test("wordOccurrences: Robert (3pts)".only) {
+  test("wordOccurrences: Robert (3pts)") {
     assertEquals(wordOccurrences("Robert"), List(('b', 1), ('e', 1), ('o', 1), ('r', 2), ('t', 1)))
   }
 
 
-  test("sentenceOccurrences: abcd e (5pts)".only) {
-    assertEquals(sentenceOccurrences(List("abcd", "e")), List(('a', 1), ('b', 1), ('c', 1), ('d', 1), ('e', 1)))
+  test("sentenceOccurrences: abced e (5pts)") {
+    assertEquals(sentenceOccurrences(List("abced", "e")), List(('a', 1), ('b', 1), ('c', 1), ('d', 1), ('e', 2)))
   }
 
 
@@ -59,7 +59,46 @@ class AnagramsSuite extends munit.FunSuite:
     )
     assertEquals(combinations(abba).toSet, abbacomb.toSet)
   }
+// la marina 2299 san miguel
+// L -V
+  test("combinations: abba (8pts)") {
+    val abba = List(('a', 2), ('b', 2), ('c', 1))
+    val abbacomb = List(
+      List(),
+      List(('c', 1)),
+      List(('b', 1)),
+      List(('b', 1), ('c', 1)),
+      List(('b', 2)),
+      List(('b', 2), ('c', 1)),
+      List(('a', 1)),
+      List(('a', 1), ('c', 1)),
+      List(('a', 1), ('b', 1)),
+      List(('a', 1), ('b', 1), ('c', 1)),
+      List(('a', 1), ('b', 2)),
+      List(('a', 1), ('b', 2), ('c', 1)),
+      List(('a', 2)),
+      List(('a', 2), ('c', 1)),
+      List(('a', 2), ('b', 1)),
+      List(('a', 2), ('b', 1), ('c', 1)),
+      List(('a', 2), ('b', 2)),
+      List(('a', 2), ('b', 2), ('c', 1)),
+    )
+    assertEquals(combinations(abba).toSet, abbacomb.toSet)
+  }
 
+  test("subtract occurrences 1") {
+    val x = List(('a', 1), ('d', 1), ('l', 1), ('r', 1))
+    val y = List(('r', 1))
+
+    assertEquals(subtract(x, y), List(('a', 1), ('d', 1), ('l', 1)))
+  }
+
+  test("subtract occurrences 2") {
+    val x = List(('a', 2), ('d', 2), ('l', 1), ('r', 1))
+    val y = List(('a', 1))
+
+    assertEquals(subtract(x, y), List(('a', 1), ('d', 2), ('l', 1), ('r', 1)))
+  }
 
   test("sentence anagrams: [] (10pts)") {
     val sentence = List()

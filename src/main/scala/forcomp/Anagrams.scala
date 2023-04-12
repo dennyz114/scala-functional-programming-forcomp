@@ -1,6 +1,7 @@
 package forcomp
 
 import scala.io.{ Codec, Source }
+import scala.collection.immutable._
 
 object Anagrams extends AnagramsInterface:
 
@@ -35,10 +36,12 @@ object Anagrams extends AnagramsInterface:
    *
    *  Note: you must use `groupBy` to implement this method!
    */
-  def wordOccurrences(w: Word): Occurrences = ???
+  def wordOccurrences(w: Word): Occurrences =
+    w.map(_.toLower).groupBy(c => c).map((c, chars) => (c, chars.length)).toList.sorted
+
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = ???
+  def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.mkString)
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
@@ -55,10 +58,15 @@ object Anagrams extends AnagramsInterface:
    *    List(('a', 1), ('e', 1), ('t', 1)) -> Seq("ate", "eat", "tea")
    *
    */
-  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = ???
+  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] =
+    dictionary
+      .map(word => wordOccurrences(word) -> word)
+      .groupBy(_._1).toList
+      .map((oc, list) => (oc, list.map(_._2))).toMap
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = ???
+  def wordAnagrams(word: Word): List[Word] =
+    dictionaryByOccurrences.getOrElse(wordOccurrences(word), Nil)
 
   /** Returns the list of all subsets of the occurrence list.
    *  This includes the occurrence itself, i.e. `List(('k', 1), ('o', 1))`
@@ -82,7 +90,14 @@ object Anagrams extends AnagramsInterface:
    *  Note that the order of the occurrence list subsets does not matter -- the subsets
    *  in the example above could have been displayed in some other order.
    */
-  def combinations(occurrences: Occurrences): List[Occurrences] = ???
+  def combinations(occurrences: Occurrences): List[Occurrences] =
+    occurrences match
+      case Nil => List(Nil)
+      case head :: tail =>
+        (for {
+          n <- 0 to head._2
+          eachCombination <- combinations(tail)
+        } yield if n == 0 then eachCombination else (head._1, n) :: eachCombination).toList
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
    *
@@ -94,7 +109,12 @@ object Anagrams extends AnagramsInterface:
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(x: Occurrences, y: Occurrences): Occurrences =
+    y.foldLeft(x.toMap){ case (acc, (occChar, occNum)) =>
+      val existentQuantity = acc.apply(occChar)
+      if existentQuantity == occNum then acc - occChar
+      else acc updated(occChar, existentQuantity - occNum)
+    }.toList.sorted
 
   /** Returns a list of all anagram sentences of the given sentence.
    *
@@ -136,7 +156,18 @@ object Anagrams extends AnagramsInterface:
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] =
+    def iteration(occurrences: Occurrences): List[Sentence] =
+      if occurrences.isEmpty then List(Nil)
+      else
+        for {
+          combination <- combinations(occurrences)
+          word <- dictionaryByOccurrences.getOrElse(combination, Nil)
+          sentence <- iteration(subtract(occurrences, wordOccurrences(word)))
+          if combination.nonEmpty
+        } yield word :: sentence
+
+    iteration(sentenceOccurrences(sentence))
 
 object Dictionary:
   def loadDictionary: List[String] =
